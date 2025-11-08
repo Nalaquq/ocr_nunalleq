@@ -1,0 +1,19 @@
+# Include documentation files
+include README.md
+include LICENSE
+include SETUP.md
+
+# Include example files
+recursive-include examples *.py *.yaml
+
+# Include test files
+recursive-include tests *.py
+
+# Exclude compiled Python files
+global-exclude *.pyc
+global-exclude __pycache__
+
+# Exclude backup and temporary files
+global-exclude *~
+global-exclude *.bak
+global-exclude *.swp
