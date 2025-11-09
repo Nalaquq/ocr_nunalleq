@@ -1,317 +1,329 @@
-# Nunalleq OCR
+# Nunalleq Artifact Photo Organizer
 
-An OCR-based artifact photo organization system for the Nunalleq museum. This tool automatically detects site numbers (e.g., GDN-248) and artifact numbers from archaeological artifact photos, then renames files following a consistent naming convention.
+Automatically rename artifact photos based on their labels using OCR (Optical Character Recognition).
 
-## Features
-
-- **Robust OCR Detection**: Uses Tesseract OCR with advanced image preprocessing to extract text from artifact photos
-- **Flexible Pattern Matching**: Handles various text layouts and spacing variations
-- **Batch Processing**: Process entire directories of artifact photos at once
-- **Safe Operations**: Includes dry-run mode and automatic backups
-- **CLI Interface**: Easy-to-use command-line tools
-- **Python API**: Import and use in your own scripts
-
-## Installation
-
-### Prerequisites
-
-1. **Python 3.9 or higher**
-
-2. **Tesseract OCR** - Install for your platform:
-
-   **Ubuntu/Debian:**
-   ```bash
-   sudo apt-get update
-   sudo apt-get install tesseract-ocr
-   ```
-
-   **macOS:**
-   ```bash
-   brew install tesseract
-   ```
-
-   **Windows:**
-   Download and install from: https://github.com/UB-Mannheim/tesseract/wiki
-
-### Install nunalleq-ocr
-
-#### From source (for development):
-
-```bash
-# Clone or navigate to the project directory
-cd ocr_nunalleq
-
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install in editable mode with dev dependencies
-pip install -e ".[dev]"
-```
-
-#### For production use:
-
-```bash
-pip install nunalleq-ocr
-```
+Perfect for archaeologists and researchers who need to organize thousands of artifact photos without typing each name manually.
 
 ## Quick Start
 
-### 1. Detect numbers from a single image
+### For Non-Technical Users (RECOMMENDED)
+
+**Just double-click one file to get started:**
+
+- **Windows:** Double-click `launch_web.bat`
+- **Mac/Linux:** Double-click `launch_web.sh` (or run `./launch_web.sh` in terminal)
+
+This will:
+1. Open a web interface in your browser
+2. Let you upload photos by clicking or dragging them
+3. Process them automatically
+4. Download a ZIP file with renamed photos
+
+**That's it!** No typing paths, no terminal commands needed.
+
+---
+
+### For Technical Users
+
+#### Installation
 
 ```bash
-nunalleq-ocr detect images/DSC_3288.jpg
+# Install the package
+pip install -e .
+
+# Verify installation
+nunalleq-ocr --version
 ```
 
-Output:
-```
-Analyzing: DSC_3288.jpg
-
-Detection Results:
-  Site Number:     GDN-248
-  Artifact Number: 76656
-
-Proposed filename: gdn248_76656.jpg
-```
-
-### 2. Preview what would happen when renaming files
+#### Quick Usage
 
 ```bash
-nunalleq-ocr preview images/
+# Launch web interface (easiest)
+nunalleq-ocr web
+
+# Or use command line:
+# Preview what will happen (safe, no changes)
+nunalleq-ocr preview photos/
+
+# Process photos and save to new folder
+nunalleq-ocr rename photos/ --output renamed/
+
+# Process a single photo
+nunalleq-ocr detect photo.jpg
 ```
 
-Output:
-```
-Preview of 2 files in images/:
+---
 
-Original                       New Name                       Site         Artifact   Status
-----------------------------------------------------------------------------------------------------
-DSC_2188.jpg                   gdn248_77238.jpg               GDN-248      77238      ✓ Ready
-DSC_3288.jpg                   gdn248_76656.jpg               GDN-248      76656      ✓ Ready
+## How It Works
 
-2/2 files ready for renaming
-```
+1. **Upload photos** - Artifact photos with visible labels
+2. **OCR Detection** - Automatically reads site number (e.g., "GDN-248") and artifact number (e.g., "105407")
+3. **Smart Renaming** - Creates clean filenames: `GDN-248_105407.jpg`
+4. **Download** - Get all renamed photos in a ZIP file
 
-### 3. Rename files (dry run first)
+### What it reads
 
+The tool looks for these patterns on artifact labels:
+- **Site Number:** e.g., `GDN-248`, `GDN 248`
+- **Artifact Number:** e.g., `105407`, `105-407`
+
+### Example
+
+**Before:** `DSC_3288.jpg`
+**After:** `GDN-248_105407.jpg`
+
+---
+
+## Features
+
+✅ **Safe**: Never modifies original photos
+✅ **Smart**: Uses advanced OCR to read handwritten and printed labels
+✅ **Fast**: Process hundreds of photos automatically
+✅ **Easy**: Web interface requires no technical knowledge
+✅ **Flexible**: Command-line tools for advanced users
+
+---
+
+## Usage Modes
+
+### 1. Web Interface (Recommended)
+
+**Launch:**
 ```bash
-# See what would happen without actually renaming
-nunalleq-ocr rename images/ --dry-run
-
-# Actually rename the files
-nunalleq-ocr rename images/
+nunalleq-ocr web
 ```
 
-### 4. Rename with output to a different directory
+**Or just double-click:** `launch_web.bat` (Windows) or `launch_web.sh` (Mac/Linux)
 
+**Features:**
+- Drag and drop photos
+- Real-time progress bar
+- Download results as ZIP
+- No file paths to type
+- Perfect for non-technical users
+
+### 2. Command Line Interface
+
+#### Preview (Safe - No Changes)
 ```bash
-nunalleq-ocr rename images/ --output renamed_photos/
+nunalleq-ocr preview photos/
 ```
+Shows what will happen without making any changes.
 
-## Usage
-
-### Command-Line Interface
-
-The `nunalleq-ocr` command provides three main subcommands:
-
-#### `detect` - Analyze a single image
-
+#### Process Photos
 ```bash
-nunalleq-ocr detect <image_path> [options]
+# Save to new folder (RECOMMENDED)
+nunalleq-ocr rename photos/ --output renamed/
 
-Options:
-  --show-text    Show the raw OCR text extracted from the image
-  --verbose      Enable verbose logging
+# Process recursively (including subfolders)
+nunalleq-ocr rename photos/ --output renamed/ --recursive
+
+# Single file
+nunalleq-ocr rename photo.jpg --output renamed/
 ```
 
-#### `preview` - Preview renaming without making changes
-
+#### Detect Only
 ```bash
-nunalleq-ocr preview <directory> [options]
+# Just see what the tool detects
+nunalleq-ocr detect photo.jpg
 
-Options:
-  -p, --pattern PATTERN    File pattern to match (default: *.jpg)
-  --verbose                Enable verbose logging
+# Show raw OCR text
+nunalleq-ocr detect photo.jpg --show-text
 ```
 
-#### `rename` - Rename files based on OCR detection
-
-```bash
-# Rename a single file
-nunalleq-ocr rename <image_path> [options]
-
-# Rename all files in a directory
-nunalleq-ocr rename -d <directory> [options]
-
-Options:
-  -d, --directory DIR      Directory containing images
-  -o, --output DIR         Output directory (default: rename in place)
-  -p, --pattern PATTERN    File pattern to match (default: *.jpg)
-  --dry-run                Show what would happen without actually renaming
-  --no-backup              Don't create backup copies
-  --overwrite              Overwrite existing files
-  --verbose                Enable verbose logging
-```
-
-### Python API
-
-You can also use the package programmatically:
+### 3. Python API
 
 ```python
-from pathlib import Path
 from nunalleq_ocr import ArtifactDetector, ArtifactRenamer
+from pathlib import Path
 
 # Detect numbers from a single image
 detector = ArtifactDetector()
-result = detector.detect(Path("images/DSC_3288.jpg"))
+result = detector.detect(Path("photo.jpg"))
 
 print(f"Site: {result.site_number}")
 print(f"Artifact: {result.artifact_number}")
-print(f"New filename: {result.get_filename('jpg')}")
+print(f"New name: {result.get_filename('jpg')}")
 
-# Rename files
+# Batch process
 renamer = ArtifactRenamer(detector=detector)
-success, message = renamer.rename_file(
-    Path("images/DSC_3288.jpg"),
-    output_dir=Path("renamed/")
-)
-print(message)
-
-# Batch processing
 results = renamer.rename_batch(
-    Path("images/"),
+    Path("photos/"),
+    output_dir=Path("renamed/"),
     pattern="*.jpg"
 )
-print(f"Renamed {results['success']} files")
+
+print(f"Success: {results['success']}/{results['total']}")
 ```
 
-## Output Format
+See `examples/usage_example.py` for more examples.
 
-Files are renamed using the following convention:
+---
 
+## Installation
+
+### Requirements
+
+- **Python 3.8+**
+- **Tesseract OCR** (free, open source)
+
+### Step 1: Install Tesseract OCR
+
+#### Windows
+1. Download from: https://github.com/UB-Mannheim/tesseract/wiki
+2. Run installer
+3. Add to PATH or the tool will find it automatically
+
+#### Mac
+```bash
+brew install tesseract
 ```
-{site_number}_{artifact_number}.{extension}
+
+#### Linux (Ubuntu/Debian)
+```bash
+sudo apt-get update
+sudo apt-get install tesseract-ocr
 ```
 
-Examples:
-- `DSC_3288.jpg` → `gdn248_76656.jpg`
-- `DSC_2188.jpg` → `gdn248_77238.jpg`
-
-The site number is converted to lowercase and hyphens are removed.
-
-## Configuration
-
-### Custom Tesseract Path
-
-If Tesseract is not in your system PATH:
+### Step 2: Install This Package
 
 ```bash
-nunalleq-ocr detect image.jpg --tesseract-cmd /path/to/tesseract
+# Clone or download this repository
+cd ocr_nunalleq
+
+# Install
+pip install -e .
 ```
 
-Or in Python:
+### Verify Installation
 
-```python
-detector = ArtifactDetector(tesseract_cmd="/path/to/tesseract")
+```bash
+nunalleq-ocr --version
 ```
 
-### Custom Site Number Pattern
+---
 
-The default pattern matches `GDN-XXX` format. To use a different pattern:
+## Safety Features
 
-```python
-detector = ArtifactDetector(site_pattern=r"ABC[-\s]?\d+")
+### Your Original Photos Are ALWAYS Safe
+
+- ✅ **Web Interface**: Photos are uploaded temporarily, processed, then deleted. Originals remain on your computer.
+- ✅ **Command Line with --output**: Copies photos to new folder, originals untouched.
+- ✅ **Preview Mode**: Shows what will happen without making any changes.
+
+### Working with External Drives
+
+**Do This (SAFE):**
+```bash
+# Copy FROM external drive TO your computer
+nunalleq-ocr rename /Volumes/BACKUP/photos/ --output ~/Desktop/renamed/
 ```
+
+**Not This:**
+```bash
+# Don't rename directly on external drives (might disconnect)
+nunalleq-ocr rename /Volumes/BACKUP/photos/
+```
+
+**Why:** External drives can disconnect during processing. Always copy to your computer first.
+
+---
 
 ## Troubleshooting
 
-### No text detected
+### "Tesseract not found"
+- **Windows:** Reinstall Tesseract and make sure to check "Add to PATH"
+- **Mac/Linux:** Run `which tesseract` to verify installation
 
-If OCR is not detecting text:
+### "No numbers detected"
+- Labels might be unclear or too small
+- Try with a clearer photo
+- Check if the photo actually has visible labels
 
-1. Check that Tesseract is properly installed:
-   ```bash
-   tesseract --version
-   ```
+### "Permission denied"
+- Make sure you have write access to the output folder
+- Don't try to modify files on read-only drives
 
-2. Ensure image quality is good (sufficient resolution, clear text)
+### Web interface won't load
+- Make sure port 5000 is not in use
+- Try: `nunalleq-ocr web --port 8000`
 
-3. Try with `--verbose` flag to see debug information:
-   ```bash
-   nunalleq-ocr detect image.jpg --verbose --show-text
-   ```
+---
 
-### Detection accuracy issues
+## Command Reference
 
-The system is optimized for:
-- White or light backgrounds
-- Consistent typeface
-- Site numbers in format: GDN-248
-- Artifact numbers: 5-7 digits (may have spaces)
+```bash
+# Web interface
+nunalleq-ocr web                    # Start on port 5000
+nunalleq-ocr web --port 8000        # Use different port
+nunalleq-ocr web --debug            # Debug mode
 
-If detection is failing:
-- Ensure proper lighting and focus in photos
-- Check that labels are clearly visible
-- Verify the format matches expected patterns
+# Preview (safe, no changes)
+nunalleq-ocr preview DIRECTORY
+
+# Rename photos
+nunalleq-ocr rename DIRECTORY --output OUTPUT_DIR
+nunalleq-ocr rename PHOTO.jpg --output OUTPUT_DIR
+nunalleq-ocr rename DIRECTORY --output OUTPUT_DIR --recursive
+
+# Detect single photo
+nunalleq-ocr detect PHOTO.jpg
+nunalleq-ocr detect PHOTO.jpg --show-text
+
+# Help
+nunalleq-ocr --help
+nunalleq-ocr rename --help
+```
+
+---
 
 ## Development
 
 ### Running Tests
-
 ```bash
-# Install dev dependencies
-pip install -e ".[dev]"
-
-# Run tests
-pytest
-
-# Run tests with coverage
-pytest --cov=nunalleq_ocr --cov-report=html
+pytest tests/
 ```
 
-### Code Formatting
-
-```bash
-# Format code
-black src/ tests/
-
-# Sort imports
-isort src/ tests/
-
-# Type checking
-mypy src/
-```
-
-## Project Structure
-
+### Project Structure
 ```
 ocr_nunalleq/
-├── src/
-│   └── nunalleq_ocr/
-│       ├── __init__.py       # Package initialization
-│       ├── detector.py       # OCR detection logic
-│       ├── renamer.py        # File renaming logic
-│       └── cli.py            # Command-line interface
-├── tests/                    # Unit tests
-├── images/                   # Sample images
-├── examples/                 # Example configurations
-├── pyproject.toml            # Package configuration
-├── README.md                 # This file
-└── LICENSE                   # License information
+├── src/nunalleq_ocr/       # Main package
+│   ├── detector.py         # OCR detection logic
+│   ├── renamer.py          # File renaming logic
+│   ├── cli.py              # Command-line interface
+│   └── webapp/             # Web interface
+│       ├── app.py          # Flask backend
+│       ├── static/         # CSS, JavaScript
+│       └── templates/      # HTML templates
+├── tests/                  # Unit tests
+├── examples/               # Usage examples
+├── launch_web.bat          # Windows launcher
+├── launch_web.sh           # Mac/Linux launcher
+└── README.md              # This file
 ```
+
+---
+
+## Credits
+
+Developed for the Nunalleq archaeological project.
+
+**Technologies:**
+- [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) - OCR engine
+- [pytesseract](https://github.com/madmaze/pytesseract) - Python wrapper for Tesseract
+- [Flask](https://flask.palletsprojects.com/) - Web framework
+- [Pillow](https://python-pillow.org/) - Image processing
+
+---
 
 ## License
 
-MIT License - see LICENSE file for details.
+MIT License - See LICENSE file for details.
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Acknowledgments
-
-Developed for the Nunalleq archaeological project to help organize and catalog artifact photographs.
+---
 
 ## Support
 
-For issues, questions, or suggestions, please open an issue on the GitHub repository.
+**Found a bug?** Open an issue on GitHub.
+
+**Need help?** Check the examples in `examples/usage_example.py` or run `nunalleq-ocr --help`.

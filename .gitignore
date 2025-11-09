@@ -62,9 +62,13 @@ env/
 # Project specific
 backup/
 renamed/
+renamed_artifacts/
+renamed_photos/
 output/
+test_output*/
 images/
 *.log
+*.zip
 
 # Jupyter Notebook
 .ipynb_checkpoints
@@ -85,3 +89,4 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+test_nested_sample/

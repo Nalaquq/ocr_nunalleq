@@ -136,7 +136,8 @@ class ArtifactRenamer:
         output_dir: Optional[Path] = None,
         pattern: str = "*.jpg",
         overwrite: bool = False,
-        create_log: bool = True
+        create_log: bool = True,
+        recursive: bool = True
     ) -> dict[str, dict]:
         """
         Rename multiple images in a directory.
@@ -147,6 +148,7 @@ class ArtifactRenamer:
             pattern: Glob pattern for matching files (default: *.jpg)
             overwrite: Whether to overwrite existing files
             create_log: Whether to create detailed log files (default: True)
+            recursive: Whether to search subdirectories recursively (default: True)
 
         Returns:
             Dictionary with statistics and results:
@@ -163,8 +165,14 @@ class ArtifactRenamer:
         if not image_dir.exists():
             raise ValueError(f"Directory not found: {image_dir}")
 
-        # Find all matching image files
-        image_files = sorted(image_dir.glob(pattern))
+        # Find all matching image files (recursively if requested)
+        if recursive:
+            image_files = sorted(image_dir.rglob(pattern))
+        else:
+            image_files = sorted(image_dir.glob(pattern))
+
+        # Filter out MacOS metadata files (._*) and other hidden files
+        image_files = [f for f in image_files if not f.name.startswith('._') and not f.name.startswith('.')]
 
         if not image_files:
             logger.warning(f"No files matching '{pattern}' found in {image_dir}")
@@ -189,8 +197,15 @@ class ArtifactRenamer:
 
             success, message = self.rename_file(img_path, output_dir, overwrite)
 
+            # Use relative path from base directory to show subdirectory structure
+            try:
+                relative_path = img_path.relative_to(image_dir)
+                original_display = str(relative_path)
+            except ValueError:
+                original_display = img_path.name
+
             result_entry = {
-                'original': img_path.name,
+                'original': original_display,
                 'success': success,
                 'message': message,
                 'site_number': detection_result.site_number,
@@ -274,7 +289,8 @@ class ArtifactRenamer:
     def preview_batch(
         self,
         image_dir: Path,
-        pattern: str = "*.jpg"
+        pattern: str = "*.jpg",
+        recursive: bool = True
     ) -> List[dict]:
         """
         Preview what would happen when renaming files without actually renaming.
@@ -282,12 +298,19 @@ class ArtifactRenamer:
         Args:
             image_dir: Directory containing images
             pattern: Glob pattern for matching files
+            recursive: Whether to search subdirectories recursively (default: True)
 
         Returns:
             List of preview results with original names and proposed new names
         """
         image_dir = Path(image_dir)
-        image_files = sorted(image_dir.glob(pattern))
+        if recursive:
+            image_files = sorted(image_dir.rglob(pattern))
+        else:
+            image_files = sorted(image_dir.glob(pattern))
+
+        # Filter out MacOS metadata files (._*) and other hidden files
+        image_files = [f for f in image_files if not f.name.startswith('._') and not f.name.startswith('.')]
 
         previews = []
         for img_path in image_files:
@@ -300,8 +323,15 @@ class ArtifactRenamer:
                 new_name = "N/A"
                 status = "✗ Detection failed"
 
+            # Use relative path from base directory to show subdirectory structure
+            try:
+                relative_path = img_path.relative_to(image_dir)
+                original_display = str(relative_path)
+            except ValueError:
+                original_display = img_path.name
+
             previews.append({
-                'original': img_path.name,
+                'original': original_display,
                 'new_name': new_name,
                 'site': result.site_number or "Not found",
                 'artifact': result.artifact_number or "Not found",

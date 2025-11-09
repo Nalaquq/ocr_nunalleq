@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nunalleq Artifact Photo Organizer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏺 Nunalleq Artifact Photo Organizer</h1>
+            <p class="subtitle">Automatically rename artifact photos based on their labels</p>
+        </header>
+
+        <div class="safety-notice">
+            <strong>✅ Your photos are safe:</strong> Original photos will never be modified. Renamed copies are saved to a new folder.
+        </div>
+
+        <div class="card">
+            <h2>Step 1: Select Photos to Process</h2>
+            <div class="form-group">
+                <label for="photoFiles">Choose artifact photos (JPG files):</label>
+                <div class="upload-area" id="uploadArea">
+                    <input type="file" id="photoFiles" accept=".jpg,.jpeg,.JPG,.JPEG" multiple style="display: none;">
+                    <div class="upload-placeholder">
+                        <div class="upload-icon">📸</div>
+                        <p><strong>Click to select photos</strong> or drag and drop here</p>
+                        <p class="upload-hint">You can select multiple JPG files at once</p>
+                    </div>
+                    <div id="fileList" class="file-list" style="display: none;"></div>
+                </div>
+                <small class="help-text">💡 Select all artifact photos you want to rename. Your originals are safe - they won't be modified.</small>
+            </div>
+        </div>
+
+        <div class="actions">
+            <button onclick="startProcess()" class="btn btn-success" id="processBtn" disabled>
+                ▶️ Process Photos
+            </button>
+        </div>
+
+        <div id="progressSection" class="card" style="display: none;">
+            <h3 id="progressTitle">Processing...</h3>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <p id="progressMessage">Starting...</p>
+        </div>
+
+        <div id="resultsSection" class="card" style="display: none;">
+            <h2>Results</h2>
+            <div id="resultsContent"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

@@ -82,11 +82,26 @@ def cmd_rename(args):
             print(f"Error: Directory not found: {input_dir}", file=sys.stderr)
             sys.exit(1)
 
+        # Safety check: warn if renaming in-place without dry-run
+        if not args.output and not args.dry_run:
+            print("\n⚠️  WARNING: You are about to rename files IN-PLACE (no output directory specified)")
+            print("   This will modify the original files in their current location.")
+            print("   Original files will be backed up to a 'backup' folder." if args.backup else "   Backups are DISABLED - original files will be modified directly!")
+            print("\n   RECOMMENDED: Use --output to copy renamed files to a new location instead.")
+            print("   Example: nunalleq-ocr rename -d \"input/\" --output \"renamed/\"\n")
+
+            if not args.force:
+                response = input("   Continue with in-place renaming? (yes/no): ").strip().lower()
+                if response not in ['yes', 'y']:
+                    print("Operation cancelled.")
+                    sys.exit(0)
+
         results = renamer.rename_batch(
             input_dir,
             output_dir=Path(args.output) if args.output else None,
             pattern=args.pattern,
-            overwrite=args.overwrite
+            overwrite=args.overwrite,
+            recursive=args.recursive
         )
 
         # Print results
@@ -115,7 +130,7 @@ def cmd_preview(args):
         print(f"Error: Directory not found: {input_dir}", file=sys.stderr)
         sys.exit(1)
 
-    previews = renamer.preview_batch(input_dir, pattern=args.pattern)
+    previews = renamer.preview_batch(input_dir, pattern=args.pattern, recursive=args.recursive)
 
     if not previews:
         print(f"No files matching '{args.pattern}' found in {input_dir}")
@@ -138,6 +153,30 @@ def cmd_preview(args):
     print(f"\n{success_count}/{len(previews)} files ready for renaming")
 
     sys.exit(0)
+
+
+def cmd_gui(args):
+    """Launch the graphical interface."""
+    try:
+        from .gui import main as gui_main
+        gui_main()
+    except ImportError as e:
+        print("Error: GUI dependencies not available.", file=sys.stderr)
+        print(f"Details: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_web(args):
+    """Launch the web interface."""
+    try:
+        from .webapp.app import main as web_main
+        port = args.port if hasattr(args, 'port') else 5000
+        web_main(port=port, debug=args.debug if hasattr(args, 'debug') else False)
+    except ImportError as e:
+        print("Error: Web interface dependencies not available.", file=sys.stderr)
+        print("Install with: pip install nunalleq-ocr[gui]", file=sys.stderr)
+        print(f"Details: {e}", file=sys.stderr)
+        sys.exit(1)
 
 
 def main():
@@ -245,6 +284,23 @@ For more information, visit: https://github.com/yourusername/nunalleq-ocr
         action='store_true',
         help='Overwrite existing files'
     )
+    rename_parser.add_argument(
+        '--recursive',
+        action='store_true',
+        default=True,
+        help='Recursively search subdirectories (default: True)'
+    )
+    rename_parser.add_argument(
+        '--no-recursive',
+        dest='recursive',
+        action='store_false',
+        help='Only process files in the specified directory, not subdirectories'
+    )
+    rename_parser.add_argument(
+        '--force',
+        action='store_true',
+        help='Skip safety confirmation prompts (use with caution!)'
+    )
     rename_parser.set_defaults(func=cmd_rename)
 
     # Preview command
@@ -263,7 +319,44 @@ For more information, visit: https://github.com/yourusername/nunalleq-ocr
         default='*.jpg',
         help='File pattern to match (default: *.jpg)'
     )
+    preview_parser.add_argument(
+        '--recursive',
+        action='store_true',
+        default=True,
+        help='Recursively search subdirectories (default: True)'
+    )
+    preview_parser.add_argument(
+        '--no-recursive',
+        dest='recursive',
+        action='store_false',
+        help='Only process files in the specified directory, not subdirectories'
+    )
     preview_parser.set_defaults(func=cmd_preview)
+
+    # GUI command
+    gui_parser = subparsers.add_parser(
+        'gui',
+        help='Launch desktop graphical user interface (requires tkinter)'
+    )
+    gui_parser.set_defaults(func=cmd_gui)
+
+    # Web command
+    web_parser = subparsers.add_parser(
+        'web',
+        help='Launch web interface in browser (RECOMMENDED for non-technical users)'
+    )
+    web_parser.add_argument(
+        '--port',
+        type=int,
+        default=5000,
+        help='Port to run web server on (default: 5000)'
+    )
+    web_parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Run in debug mode'
+    )
+    web_parser.set_defaults(func=cmd_web)
 
     # Parse arguments
     args = parser.parse_args()
